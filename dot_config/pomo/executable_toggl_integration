@@ -1,0 +1,98 @@
+#!/bin/bash
+
+TOGGL_LOG_DIR="$HOME/logs/toggl"
+mkdir -p $TOGGL_LOG_DIR
+TOGGL_LOG_DIR="$TOGGL_LOG_DIR/$(date)_toggl.log"
+
+toggl_token=${TOGGL_SECRET_TOKEN}
+
+stop_toggl_time_entries() {
+    # Fetch latest time entries
+    current_entry=$(\
+        curl -v \
+        -u ${toggl_token}:api_token \
+        -H "Content-Type: application/json" \
+        -X GET https://api.track.toggl.com/api/v8/time_entries/current \
+    )
+    entry_id=$(jq -n --argjson data "$current_entry" '$data.data.id')
+    
+    echo "$(date) - Stopping toggl time entries with id $entry_id" >> $TOGGL_LOG_DIR
+    
+    curl -v -u ${toggl_token}:api_token \
+      -H "Content-Type: application/json" \
+      -X PUT https://api.track.toggl.com/api/v8/time_entries/$entry_id/stop \
+      | echo "$(date) - JSON data: $(</dev/stdin)" >> $TOGGL_LOG_DIR
+    
+    echo "$(date) - Successfully stop toggl time entries" >> $TOGGL_LOG_DIR
+}
+
+
+start_toggl_time_entries() {
+    task_name=$(pomo st --json | jq -r ".task_message")
+    task_state=$(pomo st --json | jq -r ".state")
+    start=$(date "+%s")
+    start_isodate=$(date -d @${start} -uIs)
+    
+    # Fetch default workspaces id
+    workspace_id=$( curl -s https://api.track.toggl.com/api/v9/me -u $TOGGL_SECRET_TOKEN:api_token | jq -r '.default_workspace_id' )
+    
+    # Get the project name in task_name that match key:value project:project_name
+    # pattern, remove it from toggl task name, then fetch
+    # the toggl's project_id from api if any project with project_name defined exists
+    # in toggl
+    project=$(echo $task_name | awk -F'[ :]+' '{for (i=1;i<NF;i++) if ($i=="project") print $(i+1)}')
+    task_name=$(echo "$task_name" | sed "s/project:$project//g")
+    if [[ -z $project ]]; then
+        project="null"
+    else
+        project=$(
+            curl -s https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/projects \
+            -H "Content-Type: application/json" \
+            -u ${toggl_token}:api_token | jq ".[] | select(.name==\"${project}\")" | jq -r '.id'
+        )
+    fi
+    
+    # Get the tags in task_name that match key:value tags:tags1,tags2,tags3 pattern,
+    # remove it from toggl task name, then turn it into json array of string that contains
+    # defined task
+    tags=$(echo $task_name | awk -F'[ :]+' '{for (i=1;i<NF;i++) if ($i=="tags") print $(i+1)}')
+    task_name=$(echo "$task_name" | sed "s/tags:$tags//g")
+    if [[ -z $tags ]]; then
+        tags="null"
+    else
+        tags=$(echo "$tags" | jq -R '(./"," | map(.))')
+    fi
+    
+    json="{
+        \"description\":\"${task_name}\",
+        \"duration\": $((-1 * $start)),
+        \"duronly\": true,
+        \"project_id\": ${project},
+        \"tags\": ${tags},
+        \"start\": \"${start_isodate}\",
+        \"workspace_id\": ${workspace_id},
+        \"created_with\": \"personal_toggl_script\"
+    }"
+    
+    echo "$(date) - Starting toggl time entries" >> $TOGGL_LOG_DIR
+    
+    curl -v -u ${toggl_token}:api_token \
+      -H "Content-Type: application/json" \
+      -d "$json" \
+      -X POST "https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/time_entries" \
+      | echo "$(date) - JSON data: $(</dev/stdin)" >> $TOGGL_LOG_DIR
+    
+    echo "$(date) - Successfully start toggl time entries" >> $TOGGL_LOG_DIR
+    sleep 1
+}
+
+
+if [[ "$POMO_STATE" == "BREAKING" ]] || [[ "$POMO_STATE" == "COMPLETE" ]] || [[ "$POMO_STATE" == "PAUSED" ]]; then
+    stop_toggl_time_entries
+fi
+
+if [ "$POMO_STATE" == "RUNNING" ] ; then
+    start_toggl_time_entries
+fi
+
+echo "$(date) - Current State: $POMO_STATE" >> "$TOGGL_LOG_DIR"

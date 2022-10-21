@@ -1,0 +1,2 @@
+
+export TOGGL_SECRET_TOKEN="Your Toggl API token"
