@@ -7,3 +7,8 @@ end
 eval $HOME/miniconda3/bin/conda "shell.fish" "hook" $argv | source
 # <<< conda initialize <<<
 
+fish_vi_key_bindings
+source $HOME/.env
+
+[ ! -f $HOME/.env ] && cp $HOME/.env.example $HOME/.env
+

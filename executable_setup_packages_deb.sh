@@ -18,6 +18,7 @@ sudo apt install -y \
 	jq \
 	socat \
   golang
+
   # wmctrl and xdotool needed for setwindow script
 
 
