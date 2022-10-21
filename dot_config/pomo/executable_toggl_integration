@@ -2,7 +2,7 @@
 
 TOGGL_LOG_DIR="$HOME/logs/toggl"
 mkdir -p $TOGGL_LOG_DIR
-TOGGL_LOG_DIR="$TOGGL_LOG_DIR/$(date)_toggl.log"
+TOGGL_LOG_DIR="$TOGGL_LOG_DIR/$(date +'%Y%-m%d')_toggl.log"
 
 toggl_token=${TOGGL_SECRET_TOKEN}
 
@@ -42,14 +42,16 @@ start_toggl_time_entries() {
     # in toggl
     project=$(echo $task_name | awk -F'[ :]+' '{for (i=1;i<NF;i++) if ($i=="project") print $(i+1)}')
     task_name=$(echo "$task_name" | sed "s/project:$project//g")
+    
+    project=$(
+        curl -s https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/projects \
+        -H "Content-Type: application/json" \
+        -u ${toggl_token}:api_token | jq ".[] | select(.name==\"${project}\")" | jq -r '.id'
+    )
     if [[ -z $project ]]; then
         project="null"
     else
-        project=$(
-            curl -s https://api.track.toggl.com/api/v9/workspaces/${workspace_id}/projects \
-            -H "Content-Type: application/json" \
-            -u ${toggl_token}:api_token | jq ".[] | select(.name==\"${project}\")" | jq -r '.id'
-        )
+        echo $project >> $TOGGL_LOG_DIR
     fi
     
     # Get the tags in task_name that match key:value tags:tags1,tags2,tags3 pattern,
