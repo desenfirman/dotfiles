@@ -28,6 +28,14 @@ sudo snap install tela-icons
 sudo snap install chezmoi --classic
 sudo snap install google-cloud-sdk --classic
 
-# Install astronomer Airflow astro cli packages
+echo "Installing astronomer Airlfow astro cli packages..."
 curl -sSL install.astronomer.io | sudo bash -s
 
+# Install act for github action stuff
+echo "Installing act for github action stuff..."
+curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+# Install gitlab runner
+echo "Installin gitlab-runner command..."
+curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | sudo bash
+sudo apt install gitlab-runner -y
