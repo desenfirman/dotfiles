@@ -11,3 +11,5 @@ chezmoi init --apply $github_username
 echo "Change sh to fish"
 chsh -s $(which fish)
 
+curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim

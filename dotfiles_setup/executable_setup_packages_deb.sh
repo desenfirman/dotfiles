@@ -1,6 +1,7 @@
 #!/bin/bash
 
 sudo true
+sudo apt update
 sudo apt install -y \
 	gnome-tweaks \
 	fonts-powerline \
@@ -19,9 +20,13 @@ sudo apt install -y \
 	socat \
   golang \
   neofetch \
-  openjdk-11-jre
+  openjdk-11-jre \
+  ripgrep \
+  silversearcher-ag \
+  fzf
 
   # wmctrl and xdotool needed for setwindow script
+  # ripgrep, silversearcher-ag needed for fzf
 
 
 sudo snap install tela-icons
@@ -39,3 +44,4 @@ curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
 echo "Installin gitlab-runner command..."
 curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" | sudo bash
 sudo apt install gitlab-runner -y
+
