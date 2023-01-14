@@ -1,36 +1,31 @@
-#!/usr/bin/env python3
-import subprocess
-import time
-import sys
+#!/bin/bash
 
-app = sys.argv[1]
+toggle_floating_key="Super_L+g"
+last_window=$(wmctrl -lpx | tail -n1)
+checked_window=$last_window
+bash -c "$1"
+while [[ $last_window == $checked_window ]]
+do
+	checked_window=$(wmctrl -lpx | tail -n1)
+	echo "checked window $checked_window"
+	sleep 0.1
+done
+window=$(wmctrl -lpx | tail -n1)
+a=( $window )
+wid=${a[0]}
 
-get = lambda x: subprocess.check_output(["/bin/bash", "-c", x]).decode("utf-8")
-ws1 = get("wmctrl -lp"); t = 0
-POpen = subprocess.Popen([app])
+echo $window
 
-
-print(POpen.pid)
-time.sleep(0.1)
-while t < 30:      
-    ws2 = [w.split()[0:3] for w in get("wmctrl -lp").splitlines() if not w in ws1]
-    procs = [get("printf 0x%x $(xdotool getactivewindow)")]
-    if len(procs) > 0:
-        w_id = procs[0]
-        print(w_id)
-        subprocess.call(["/bin/bash", "-c", f"xdotool windowfocus --sync {w_id}"])
-        time.sleep(0.1)
-        cmds = [
-            "wmctrl -ir "+w_id+" -b remove,maximized_horz",
-            "wmctrl -ir "+w_id+" -b remove,maximized_vert",
-            "xdotool key Super_L+g",
-            "xdotool windowsize --sync "+procs[0]+" "+sys.argv[4]+"% "+sys.argv[5]+"%",
-            "xdotool windowmove "+procs[0] + " "+sys.argv[2]+" "+sys.argv[3]
-        ]
-        for cmd in cmds:
-            subprocess.call(["/bin/bash", "-c", cmd])
-            time.sleep(0.01)
-        break
-    time.sleep(0.5)
-    t = t+1
-
+xdotool windowfocus --sync ${wid}
+sleep 0.1
+xdotool key ${toggle_floating_key}
+sleep 0.1
+wmctrl -ir ${wid} -b remove,maximized_horz
+wmctrl -ir ${wid} -b remove,maximized_vert
+sleep 0.1
+xdotool windowsize --sync ${wid} ${4}% ${5}%
+xdotool windowmove --sync ${wid} ${2} ${3}
+sleep 0.1
+xdotool mousemove  --sync $((${2} + 50)) $((${3} + 50))
+xdotool windowfocus --sync ${wid}
+echo ""
