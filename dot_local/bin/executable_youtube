@@ -1,0 +1,2 @@
+#!/bin/bash
+google-chrome --app-id="youtube-web" --app="https://youtube.com"

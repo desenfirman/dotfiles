@@ -1,0 +1,2 @@
+#!/bin/bash
+~/dotfiles_setup/setwindow "google-chrome --app-id='aspire-budget-companion-app' --app='https://www.appsheet.com/start/970dba64-baa6-4b03-b90e-4bbb4a97a9af'" 0 400 10 60
