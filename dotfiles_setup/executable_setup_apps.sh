@@ -13,6 +13,8 @@ echo "Installing Sublime Merge 🌳 . . ."
 sudo snap install sublime-merge --classic
 echo "Installing Google Chrome 🌐 . . ."
 sudo apt install -y google-chrome-stable
+echo "Install cli-utils. . ."
+sudo apt install ncdu btop
 
 echo "Installing DBeaver 📓 . . ."
 REQUIRED_PKG="dbeaver-ce"

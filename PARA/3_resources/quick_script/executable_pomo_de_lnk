@@ -1,0 +1,4 @@
+#!/bin/bash
+
+
+pomo s "project:data-engineering-at-lnk tags:$1 $2"

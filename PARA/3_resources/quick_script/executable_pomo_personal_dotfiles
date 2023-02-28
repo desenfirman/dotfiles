@@ -1,0 +1,4 @@
+#!/bin/bash
+
+
+pomo s "project:personal-dotfiles tags:$1 $2"
