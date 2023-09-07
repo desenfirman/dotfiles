@@ -3,7 +3,7 @@
 github_username=desenfirman
 
 echo "Downloading OMF"
-curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install > install_omf && chmod +x install_omf && ./install_omf && rm install_omf
+curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install > install && fish install --noninteractive && rm install
 
 echo "Applying fish config using chezmoi"
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --one-shot $github_username
