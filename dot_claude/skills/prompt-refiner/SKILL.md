@@ -40,6 +40,14 @@ Do **not** use this skill when:
 - The user only wants a direct answer/content, not a prompt for another AI.
 - The user wants actions executed (running code, calling APIs) instead of prompt design.
 If in doubt, **assume** they want a better, more efficient prompt and proceed.
+
+### Model Calibration Mode (special trigger)
+
+Activate this mode when the user provides **both**:
+1. An actual output from a cost-efficient model (e.g. Haiku, Flash, GPT-4o-mini) run against the refined prompt.
+2. Their own remarks on what fell short — missing steps, wrong format, hallucinations, etc.
+
+In this mode, you do not start from scratch. You **diagnose the real failure evidence** and apply the minimum targeted changes to the existing prompt to close the gap.
  
 ---
  
@@ -135,7 +143,25 @@ You actively detect and fix:
 - Context leakage and prompt-injection risks.
 ---
  
-## Workflow: Lyra 4D
+## Failure Pattern Taxonomy
+
+Use this reference when diagnosing cost-efficient model outputs in Calibration Mode.
+Match observable symptoms to patterns, then apply the listed adaptation strategy.
+
+| Observable symptom in model output | Failure pattern | Adaptation strategy |
+|---|---|---|
+| Steps merged, logic skipped, conclusion jumps | **Shallow reasoning** | Add explicit CoT trigger; break task into numbered steps |
+| Output ignores specified format despite instructions | **Format non-compliance** | Add rigid schema anchor + 1-shot minimal example |
+| Constraint obeyed early but violated later in output | **Instruction drift** | Repeat 2–4 critical rules as a checklist at the end of the prompt |
+| Confident but fabricated data, URLs, or statistics | **Hallucination** | Add "only use provided context; admit uncertainty with 'I don't know'" rule |
+| Output cuts off or becomes generic before task is complete | **Context overload** | Front-load key info; move supporting detail to the end; consider prompt chaining |
+| Flat, generic, or off-tone response | **Persona not grounded** | Strengthen role definition with a concrete scope sentence and one behavioral rule |
+| Misidentifies the primary task among many instructions | **Task ambiguity** | Isolate the primary task in its own labeled section at the top |
+| Over-cautious refusals or excessive caveats | **Over-hedging** | Add a direct permissive instruction scoping the allowed response space |
+
+---
+
+## Workflow: Lyra 5D
  
 Always follow this process:
  
@@ -165,16 +191,24 @@ Always follow this process:
     - Prefer short directives over long paragraphs.
     - Avoid repeating the same rule in multiple places.
   - Designing clear, compact self-check instructions.
-### 4. Delivery
- 
-- Return a **single, structured answer** using the Output Format below.
-- Ensure the optimized prompt is:
-  - Self-contained.
-  - Copy-paste ready.
-  - Noticeably **shorter / clearer / more robust** than the original.
----
- 
-## Output Format (Strict, Markdown)
+### 4. Calibrate *(Model Calibration Mode only)*
+
+Activate this step only when the user provides a cost-efficient model output + their remarks.
+
+1. **Parse evidence**
+   - Quote the key failing segments from the model's output.
+   - Map each user remark to a specific symptom.
+2. **Classify failure patterns**
+   - Use the Failure Pattern Taxonomy above.
+   - Identify 1–4 root patterns (avoid over-diagnosing).
+3. **Apply targeted adaptations**
+   - Make the minimum changes to the existing optimized prompt.
+   - Do not rewrite sections unrelated to the identified patterns.
+   - Tag each change inline with the pattern it addresses, e.g. `[fix: instruction drift]`.
+4. **Validate token budget**
+   - Adaptations for cost-efficient models must not bloat the prompt unnecessarily.
+   - Prefer compact additions (a single rule, a schema line, a checklist) over rewrites.
+### 5. Delivery
  
 All outputs from this skill **must** follow this structure:
  
@@ -214,6 +248,32 @@ All outputs from this skill **must** follow this structure:
      - "Do you have a target output length (word count, sections, character limit)?"
      - "Is the primary audience a general user or a domain expert?"
      - "Do you want to prioritize detail or brevity?"
+5. **🔄 Model Adaptation** *(only when Calibration Mode is active)*
+
+   Structure this section as follows:
+
+   **Evidence**
+   > Quoted excerpt(s) from the cost-efficient model's actual output that demonstrate the problem.
+
+   **User Remarks**
+   > Verbatim or paraphrased — what the user said was insufficient.
+
+   **Failure Patterns Detected**
+   - List each matched pattern from the taxonomy (e.g. `Shallow reasoning`, `Format non-compliance`).
+
+   **Changes Applied**
+   | Change | Location in prompt | Pattern addressed |
+   |---|---|---|
+   | Added numbered step breakdown | Task section | Shallow reasoning |
+   | Appended constraint checklist | End of prompt | Instruction drift |
+   | … | … | … |
+
+   **🎯 Adapted Prompt (cost-efficient model)**
+   - A second fenced code block with the calibrated prompt, ready to paste:
+     ```text
+     [ADAPTED PROMPT FOR COST-EFFICIENT MODEL]
+     ```
+   - This is a standalone variant — do not reference the frontier-model version inside it.
 ---
  
 ## Hallucination & Safety Constraints
