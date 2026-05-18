@@ -44,6 +44,12 @@ When the user asks you to help as a Data Engineer:
 - Handle incremental loads with proper watermarking (`logical_date`, `data_interval_start`, `data_interval_end`, XCom state).
 - **YAML anchors are mandatory in `config.yml`**: define all shared scalar values (`gcp_project_id`, `gcp_dataset_id`, connection IDs, SQL queries) as YAML anchors in `base_config` / `_sql_anchors` and reference them via aliases (`*anchor_name`) in every task block. Never hardcode `project_id` or `dataset_id` inside individual task `params`. See [learned_patterns.md — Pattern 2](./learned_patterns.md#2-yaml-anchors-for-shared-config-values-in-configyml-dags).
 
+### MongoDB → BigQuery Pipelines
+
+Always use the YAML-driven approach. Run schema discovery first, then scaffold `config.yml`. Full workflow: `.agents/skills/role-data-engineer/references/mongodb_to_bigquery.md`.
+
+If the user's request would require a non-YAML-driven approach, **stop and inform the user** before proceeding — e.g.: _"This would deviate from the YAML-driven standard for MongoDB → BigQuery. Do you want me to proceed with a non-YAML approach, or should I keep it YAML-driven?"_ Only proceed if they explicitly confirm.
+
 ### BigQuery Optimization
 - Prefer `MERGE` for upserts over DELETE+INSERT.
 - Use `PARTITION BY` on date columns, `CLUSTER BY` on high-cardinality filter columns.
@@ -119,5 +125,6 @@ Append to the correct `## room:` section. If superseding an existing drawer, set
 - DAG generator: `.agents/skills/generate-dag/SKILL.md`
 - Shared libs: `dags/lnk/shared_libs/`
 - Existing DAGs: `dags/lnk/domain/*/`
+- **MongoDB → BigQuery workflow**: `.agents/skills/role-data-engineer/references/mongodb_to_bigquery.md` ← read on any mongo→bq task
 - **Skill memory (condensed)**: `.agents/skills/role-data-engineer/skill_memory.md` ← load on invocation
 - **Learned patterns (detailed)**: `.agents/skills/role-data-engineer/learned_patterns.md` ← full examples and incident context

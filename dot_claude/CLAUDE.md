@@ -22,32 +22,59 @@ It establishes shared context, working preferences, and pointers to available sk
 
 ## Active Skills
 
-The following skills are registered under `skills/` and are available to assist in sessions:
+Full catalog with example invocations: see [`~/.claude/SKILLS.md`](./SKILLS.md).
 
-| Skill | Description |
-|-------|-------------|
-| `rca-analysis` | Structured root cause analysis for production incidents and data quality issues |
-| `prompt-refiner` | Iteratively refine and improve prompts for AI agents and LLM pipelines |
-| `course-material-generator` | Generate structured course outlines, exercises, and learning materials |
-| `decision-council` | Stress-test an important decision by running a structured council of expert perspectives |
-| `one-skill-to-rule-them-all` | Monitor task execution for skill improvement opportunities; invoke at the start of every task-oriented session |
-| `role-data-engineer` | Data Engineer role — build and maintain ETL/ELT pipelines, Airflow DAGs, BigQuery optimization |
+Skills are discovered at runtime from `~/.agents/skills/*/SKILL.md` (personal) and `.agents/skills/*/SKILL.md` (project).
 
-Skills are discovered at runtime from `~/.claude/skills/*/SKILL.md`.
+## Memory System
 
-## Task Observer — Skill Improvement
+Agent memory tersimpan di `~/.claude/memory/` menggunakan **MemPalace Spatial Convention** — tanpa vector DB, hanya Python stdlib dan file system.
 
-At the start of any task-oriented session — any interaction where you will
-use tools and produce deliverables — invoke the task-observer skill before
-beginning work. This ensures skill improvement opportunities are captured
-throughout the session.
+### Struktur Direktori
 
-When loading any skill, check the observation log for OPEN observations
-tagged to that skill. Apply their insights to the current work, even if
-the skill file hasn't been updated yet.
+```
+~/.claude/memory/
+  identity.md              ← L0: selalu dibaca di awal setiap sesi (~80 token)
+  wing_{project}/
+    room_{topic}/
+      hall_facts/          ← keputusan final, pilihan yang dikunci
+      hall_events/         ← session logs, debugging, milestones
+      hall_discoveries/    ← insight baru, breakthroughs, solusi tidak terduga
+      hall_preferences/    ← habits, opini, preferensi yang terbentuk
+      hall_advice/         ← rekomendasi yang diberikan ke user
+```
 
-**Workspace folder** (for task-observer paths): `~/.local/share/chezmoi`
+Setiap drawer = satu file `.md` dengan frontmatter:
+```markdown
+---
+date: YYYY-MM-DD
+wing: project-name
+room: topic-name
+hall: hall_facts
+refs: []
+---
+Isi memori di sini — satu fakta atau event per file.
+```
 
-- Observation log: `~/.local/share/chezmoi/skill-observations/log.md`
-- Cross-cutting principles: `~/.local/share/chezmoi/skill-observations/cross-cutting-principles.md`
-- Skill updates staging: `~/.local/share/chezmoi/skill-updates/`
+### Aturan Operasional
+
+**Awal sesi:**
+1. Baca `~/.claude/memory/identity.md` — selalu.
+2. Identifikasi wing yang relevan dengan task saat ini, lalu baca hall yang sesuai via path.
+
+**Saat menyimpan memori baru:**
+- Tentukan: wing (project) → room (topic) → hall (jenis memori).
+- Satu drawer = satu file. Jangan campurkan fakta berbeda dalam satu file.
+- Tulis `refs: [wing_x/room_y/filename.md]` jika ada relasi cross-wing (Tunnel).
+
+**Saat retrieve:**
+- Addressed recall: path langsung → `memory/wing_{x}/room_{y}/hall_{z}/`
+- Keyword search: grep across wing atau seluruh memory
+- Tunnel traversal: ikuti field `refs:` secara manual
+
+### Script Retrieval
+
+Tersedia di `~/.claude/memory/scripts/memory.py` — Python stdlib only:
+- `recall(wing, room, hall=None)` → list drawer yang relevan
+- `search(keyword, wing=None)` → grep-based scan
+- `wake_up(wing)` → identity + top facts dari wing tertentu

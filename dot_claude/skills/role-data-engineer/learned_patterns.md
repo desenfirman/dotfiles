@@ -3,7 +3,7 @@
 > **Purpose:** Codified lessons from real incidents and pipeline work on the LNK Data Platform.  
 > **Audience:** Data Engineers, Tech Lead  
 > **Owner:** `@mis.stf08`  
-> **Last updated:** 2026-05-04  
+> **Last updated:** 2026-05-12  
 
 ---
 
@@ -17,6 +17,7 @@
 | 4 | [Use `logical_date` / `data_interval_start` / `data_interval_end` instead of `execution_date` / `next_execution_date`](#4-use-logical_date--data_interval_start--data_interval_end-instead-of-execution_date--next_execution_date) | Airflow DAGs | Standard 2026-04-15 |
 | 5 | [Raise `AirflowSkipException` when a pipeline produces zero rows](#5-raise-airflowskipexception-when-a-pipeline-produces-zero-rows) | Airflow DAGs | Standard 2026-05-04 |
 | 6 | [Standard metadata columns: `id` and `load_timestamp` on every target table](#6-standard-metadata-columns-id-and-load_timestamp-on-every-target-table) | BigQuery / Pipeline Standards | Standard 2026-05-04 |
+| 7 | [Excel Online via Graph API — prefer binary download + pd.read_excel over usedRange JSON](#7-excel-online-via-graph-api--prefer-binary-download--pdread_excel-over-usedrange-json) | Excel Online / Microsoft Graph API | Standard 2026-05-12 |
 
 ---
 
@@ -183,6 +184,20 @@ Files: `dags/lnk/domain/supply_chain/logistics_*/config.yml`
 ---
 
 *Add new patterns below this line following the same structure.*
+
+---
+
+## 7. Excel Online via Graph API — usedRange JSON used instead of binary download
+
+**Date:** 2026-05-12  
+**Pipeline:** `trade_marketing__kpi__monthly`  
+**File:** `dags/lnk/domain/trade_marketing/kpi/main.py`
+
+Initial implementation called the `usedRange` JSON endpoint and manually extracted `rows[0]` as headers, then constructed the DataFrame with `dict(zip(...))`. The prompt specified that endpoint explicitly so it was followed, but `MicrosoftGraphAPI._perform_request()` + `/content` + `pd.read_excel(..., header=0)` would have been simpler and removed all manual header handling.
+
+Corrected in the same session by replacing `_fetch_sheet_data()` with `_fetch_sheet_df()`.
+
+**Standard:** see `standards.md` → *Excel Online / Graph API ingestion*
 
 ---
 
