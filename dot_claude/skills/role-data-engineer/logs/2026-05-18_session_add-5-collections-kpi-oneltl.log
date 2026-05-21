@@ -4,58 +4,58 @@
 # Tasks: (1) Create MongoDB→BigQuery YAML template; (2) Add 5 new MongoDB collections to kpi_oneltl pipeline
 # ─────────────────────────────────────────────────────────────────────────────
 
-2026-05-18T10:01:12+07:00 - SKILL LOADED: role-data-engineer SKILL.md read to guide DAG authoring workflow
-2026-05-18T10:02:00+07:00 - CONTEXT READ: dags/lnk/domain/people/kpi_oneltl/config.yml — inspected existing YAML structure, anchors, task patterns
-2026-05-18T10:03:00+07:00 - CONTEXT READ: dags/lnk/shared_libs/parser/example_bigquery_to_bigquery_config.yml — used as reference for template layout
-2026-05-18T10:05:00+07:00 - FILE CREATED: dags/lnk/shared_libs/parser/example_mongo_to_bigquery_config.yml — MongoDB→BigQuery YAML template with inline comments, incremental + full-load variants
+2026-05-18T10:01:12+07:00 - SKILL LOADED: role-data-engineer SKILL.md read to guide DAG authoring workflow — est token: 800
+2026-05-18T10:02:00+07:00 - CONTEXT READ: dags/lnk/domain/people/kpi_oneltl/config.yml — inspected existing YAML structure, anchors, task patterns — est token: 1200
+2026-05-18T10:03:00+07:00 - CONTEXT READ: dags/lnk/shared_libs/parser/example_bigquery_to_bigquery_config.yml — used as reference for template layout — est token: 900
+2026-05-18T10:05:00+07:00 - FILE CREATED: dags/lnk/shared_libs/parser/example_mongo_to_bigquery_config.yml — MongoDB→BigQuery YAML template with inline comments, incremental + full-load variants — est token: 2100
 
 2026-05-18T10:10:00+07:00 - TASK START: Add 5 new collections to kpi_oneltl — t_kpi_strategic_map_corporate_detail, t_kpi_vam_detail, t_kpi_ham_detail, t_kpi_pica, t_kpi_cascade_detail
-2026-05-18T10:11:00+07:00 - CONTEXT READ: connections.env / .env — looked up MongoDB connection string for prod__mongo__one_employee__rw
-2026-05-18T10:12:00+07:00 - WORKAROUND: fish shell does not support `VAR=val command` inline env var syntax (bash-ism). Used `set conn_val (grep ...)` then `set -x PROD__MONGO__ONE_EMPLOYEE__RW $conn_val` instead - scripts/mongodb_source_definition_generator.py
-2026-05-18T10:13:00+07:00 - WORKAROUND: fish shell does not support `conn_val=$(...)` substitution syntax. Switched to fish-compatible `set conn_val (...)` form - scripts/mongodb_source_definition_generator.py
-2026-05-18T10:14:00+07:00 - WORKAROUND: mongodb_source_definition_generator.py uppercases conn-id to look up env var, but .env stores key in lowercase. Pre-exported uppercase var: `set -x PROD__MONGO__ONE_EMPLOYEE__RW $conn_val` - scripts/mongodb_source_definition_generator.py
+2026-05-18T10:11:00+07:00 - CONTEXT READ: connections.env / .env — looked up MongoDB connection string for prod__mongo__one_employee__rw — est token: 400
+2026-05-18T10:12:00+07:00 - WORKAROUND: fish shell does not support `VAR=val command` inline env var syntax (bash-ism). Used `set conn_val (grep ...)` then `set -x PROD__MONGO__ONE_EMPLOYEE__RW $conn_val` instead - scripts/mongodb_source_definition_generator.py — est token: 600
+2026-05-18T10:13:00+07:00 - WORKAROUND: fish shell does not support `conn_val=$(...)` substitution syntax. Switched to fish-compatible `set conn_val (...)` form - scripts/mongodb_source_definition_generator.py — est token: 500
+2026-05-18T10:14:00+07:00 - WORKAROUND: mongodb_source_definition_generator.py uppercases conn-id to look up env var, but .env stores key in lowercase. Pre-exported uppercase var: `set -x PROD__MONGO__ONE_EMPLOYEE__RW $conn_val` - scripts/mongodb_source_definition_generator.py — est token: 500
 
-2026-05-18T10:16:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_strategic_map_corporate_detail --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200
-2026-05-18T10:18:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_vam_detail --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200
-2026-05-18T10:20:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_ham_detail --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200
-2026-05-18T10:22:00+07:00 - ISSUE: t_kpi_ham_detail returned 0 documents / 0 fields — collection is empty in current environment
-2026-05-18T10:23:00+07:00 - WORKAROUND: Scaffolded t_kpi_ham_detail schema manually based on t_kpi_vam_detail structure (HAM ≈ VAM domain shape). Fields: _id, header_trans_code, is_active, year, company, perspective, so_kpi_code, strategy_objective, kpi_code, kpi_name, kpi_target, organizations, organization_first_layer, created_by, updated_by, created_at, updated_at, __v
-2026-05-18T10:25:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_pica --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200
-2026-05-18T10:27:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_cascade_detail --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200
+2026-05-18T10:16:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_strategic_map_corporate_detail --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200 — est token: 1800
+2026-05-18T10:18:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_vam_detail --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200 — est token: 1900
+2026-05-18T10:20:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_ham_detail --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200 — est token: 700
+2026-05-18T10:22:00+07:00 - ISSUE: t_kpi_ham_detail returned 0 documents / 0 fields — collection is empty in current environment — est token: 400
+2026-05-18T10:23:00+07:00 - WORKAROUND: Scaffolded t_kpi_ham_detail schema manually based on t_kpi_vam_detail structure (HAM ≈ VAM domain shape) — est token: 900
+2026-05-18T10:25:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_pica --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200 — est token: 1800
+2026-05-18T10:27:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_cascade_detail --load-strategy merge --filter-column updated_at --unique-identifier _id --sample-size 200 — est token: 1800
 
-2026-05-18T10:30:00+07:00 - CORRECTION: Generator outputs YAML alias *gcp_project_id / *gcp_dataset_id but config.yml anchors are named *default_project_id / *default_dataset_id. Manually corrected all 5 collection entries before writing to file
-2026-05-18T10:31:00+07:00 - CORRECTION: Generator wraps unique_identifier value in backticks (`_id`) but existing config uses bare string (_id). Removed backticks across all 5 entries
-2026-05-18T10:32:00+07:00 - CORRECTION: Generator omits mongo_conn_id from ingest-to-gcs block. Added `mongo_conn_id: *mongo_default` to all 5 entries to match existing pattern
+2026-05-18T10:30:00+07:00 - CORRECTION: Generator outputs *gcp_project_id / *gcp_dataset_id but config.yml anchors are *default_project_id / *default_dataset_id — corrected across all 5 entries — est token: 500
+2026-05-18T10:31:00+07:00 - CORRECTION: Generator wraps unique_identifier in backticks (`_id`) but existing config uses bare string — removed backticks across all 5 entries — est token: 400
+2026-05-18T10:32:00+07:00 - CORRECTION: Generator omits mongo_conn_id from ingest-to-gcs block — added `mongo_conn_id: *mongo_default` to all 5 entries — est token: 400
 
-2026-05-18T10:35:00+07:00 - FILE MODIFIED: dags/lnk/domain/people/kpi_oneltl/config.yml — inserted 5 collection task entries after kpi_actualization in &default_dag_config anchor (daily_midnight / yearly_closing / monthly_closing)
-2026-05-18T10:38:00+07:00 - FILE MODIFIED: dags/lnk/domain/people/kpi_oneltl/config.yml — appended same 5 collection entries to full_load_onetime DAG with filter: {} (full load variant, no date filter)
-2026-05-18T10:47:21+07:00 - VALIDATION: python -c "import yaml; parse config.yml; print DAG task IDs" — confirmed all 4 DAGs have correct task lists
-2026-05-18T10:47:21+07:00 - SESSION COMPLETE: All 5 collections added and validated
+2026-05-18T10:35:00+07:00 - FILE MODIFIED: dags/lnk/domain/people/kpi_oneltl/config.yml — 5 collection task entries inserted after kpi_actualization in &default_dag_config anchor (daily_midnight / yearly_closing / monthly_closing) — est token: 2400
+2026-05-18T10:38:00+07:00 - FILE MODIFIED: dags/lnk/domain/people/kpi_oneltl/config.yml — same 5 entries appended to full_load_onetime DAG with filter: {} — est token: 2400
+2026-05-18T10:47:21+07:00 - VALIDATION: python -c "import yaml; parse config.yml; print DAG task IDs" — confirmed all 4 DAGs have correct task lists — est token: 700
+2026-05-18T10:47:21+07:00 - SESSION COMPLETE
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Observations for Skill Improvement:
 #
-# 1. FISH SHELL SETUP — The skill should document fish-compatible env var
-#    export syntax explicitly, since the repo's standard shell is fish and
-#    the inline `VAR=val cmd` pattern fails silently or with errors.
-#    Recommended addition to SKILL.md: a "Shell environment setup" section
-#    with fish-compatible commands for pre-exporting connection strings.
+# 1. WORKAROUND: Fish shell env var export syntax not documented in skill.
+#    Recommended fix: Add "Shell Environment Setup" section to SKILL.md with
+#    fish-compatible syntax for pre-exporting connection strings before running
+#    scripts/mongodb_source_definition_generator.py.
 #
-# 2. GENERATOR OUTPUT NORMALIZATION — The schema discovery script
-#    (mongodb_source_definition_generator.py) produces output that does not
-#    match the repo's YAML anchor naming convention (*gcp_project_id vs
-#    *default_project_id) and wraps unique_identifier in backticks.
-#    Every run requires manual normalization. Either fix the generator or
-#    add a post-processing step to the skill workflow.
+# 2. CORRECTION: mongodb_source_definition_generator.py outputs wrong YAML
+#    anchor names (*gcp_project_id vs *default_project_id) and wraps
+#    unique_identifier in backticks every run — requires manual fix every time.
+#    Recommended fix: Add a "Generator Output Normalization" checklist step
+#    to the schema discovery section of SKILL.md. Or fix the generator itself.
 #
-# 3. EMPTY COLLECTION HANDLING — No guidance exists in the skill for
-#    collections with 0 sampled documents. The agent had to improvise by
-#    mirroring a structurally similar collection. The skill should define
-#    a fallback: scaffold from a named reference collection or flag for
-#    manual schema definition.
+# 3. ISSUE: No skill guidance for empty collections (0 sampled docs).
+#    Recommended fix: Define a fallback strategy — mirror a structurally
+#    similar collection, or flag as "pending schema" with a TODO comment.
 #
-# 4. ANCHOR INHERITANCE AWARENESS — The skill should note that YAML anchors
-#    (&default_dag_config) cause task lists to be inherited automatically
-#    by other DAGs. Agent must add tasks only once to the anchor, not
-#    duplicate across all inheriting DAGs.
+# 4. CORRECTION: Generator omits mongo_conn_id from ingest-to-gcs block.
+#    Recommended fix: Note in SKILL.md that mongo_conn_id must always be
+#    manually added after running the generator.
+#
+# 5. WORKAROUND (anchor inheritance): Editing the YAML anchor automatically
+#    propagates to all inheriting DAGs — agent must not duplicate entries.
+#    Recommended fix: Add a note in SKILL.md about YAML anchor inheritance
+#    behavior for the kpi_oneltl (and similar) config patterns.
 # ─────────────────────────────────────────────────────────────────────────────

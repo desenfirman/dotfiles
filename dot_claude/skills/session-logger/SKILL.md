@@ -59,8 +59,10 @@ If multiple sessions share the same title on the same day, append `_2`, `_3`, et
 
 ### Log Entry Format
 ```
-YYYY-MM-DDThh:mm:ss+07:00 - CATEGORY: description - [optional: path/to/script_or_file]
+YYYY-MM-DDThh:mm:ss+07:00 - CATEGORY: description - [optional: path/to/script_or_file] — est token: <N>
 ```
+
+`est token` is a rough estimate of tokens consumed by that agent turn, computed as `len(all text in turn) / 4` rounded to the nearest 100. Omit if the turn involved no significant model output (e.g. pure file reads).
 
 ### Entry Categories
 
@@ -106,6 +108,8 @@ Scan the conversation summary and terminal history for:
 
 Use timestamps from terminal output where available. Approximate other timestamps by interpolating between known anchors (session start, session end).
 
+For each entry, estimate tokens consumed by that agent turn: count all characters (prompt + response + tool outputs) and divide by 4, rounded to the nearest 100. Append as `— est token: <N>` at the end of the line.
+
 ### Step 4 — Identify Observations
 After building the timeline, review for recurring friction patterns:
 - Did the agent need a workaround for something the skill should have warned about?
@@ -138,15 +142,15 @@ Report:
 # Tasks: Add 5 new MongoDB collections to kpi_oneltl pipeline
 # ─────────────────────────────────────────────────────────────────────────────
 
-2026-05-18T10:01:12+07:00 - SKILL LOADED: role-data-engineer SKILL.md read to guide DAG authoring workflow
-2026-05-18T10:02:00+07:00 - CONTEXT READ: dags/lnk/domain/people/kpi_oneltl/config.yml
-2026-05-18T10:12:00+07:00 - WORKAROUND: fish shell does not support `VAR=val cmd` inline env var syntax. Used `set -x VAR val` instead - scripts/mongodb_source_definition_generator.py
-2026-05-18T10:16:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_strategic_map_corporate_detail
-2026-05-18T10:22:00+07:00 - ISSUE: t_kpi_ham_detail returned 0 documents — collection empty in current environment
-2026-05-18T10:23:00+07:00 - WORKAROUND: Scaffolded t_kpi_ham_detail schema manually, mirroring t_kpi_vam_detail structure
-2026-05-18T10:30:00+07:00 - CORRECTION: Generator outputs *gcp_project_id but config uses *default_project_id — renamed all aliases
-2026-05-18T10:35:00+07:00 - FILE MODIFIED: dags/lnk/domain/people/kpi_oneltl/config.yml — 5 collections added to &default_dag_config
-2026-05-18T10:47:21+07:00 - VALIDATION: python -c "import yaml; parse config.yml; print task IDs"
+2026-05-18T10:01:12+07:00 - SKILL LOADED: role-data-engineer SKILL.md read to guide DAG authoring workflow — est token: 800
+2026-05-18T10:02:00+07:00 - CONTEXT READ: dags/lnk/domain/people/kpi_oneltl/config.yml — est token: 1200
+2026-05-18T10:12:00+07:00 - WORKAROUND: fish shell does not support `VAR=val cmd` inline env var syntax. Used `set -x VAR val` instead - scripts/mongodb_source_definition_generator.py — est token: 600
+2026-05-18T10:16:00+07:00 - SCRIPT INVOKED: scripts/mongodb_source_definition_generator.py --conn-id prod__mongo__one_employee__rw --collection t_kpi_strategic_map_corporate_detail — est token: 1800
+2026-05-18T10:22:00+07:00 - ISSUE: t_kpi_ham_detail returned 0 documents — collection empty in current environment — est token: 400
+2026-05-18T10:23:00+07:00 - WORKAROUND: Scaffolded t_kpi_ham_detail schema manually, mirroring t_kpi_vam_detail structure — est token: 900
+2026-05-18T10:30:00+07:00 - CORRECTION: Generator outputs *gcp_project_id but config uses *default_project_id — renamed all aliases — est token: 500
+2026-05-18T10:35:00+07:00 - FILE MODIFIED: dags/lnk/domain/people/kpi_oneltl/config.yml — 5 collections added to &default_dag_config — est token: 2400
+2026-05-18T10:47:21+07:00 - VALIDATION: python -c "import yaml; parse config.yml; print task IDs" — est token: 700
 2026-05-18T10:47:21+07:00 - SESSION COMPLETE
 
 # ─────────────────────────────────────────────────────────────────────────────
