@@ -1,0 +1,253 @@
+# =============================================================================
+# TEMPLATE: MongoDB → BigQuery Ingestion Pipeline
+# =============================================================================
+# Pattern: YAML-driven DAG 
+# Usage  : Copy this file to dags/lnk/domain/<domain>/<function>/config.yml
+#          then create a parser.py in the same directory (copy from kpi_oneltl).
+#
+# Field reference
+# ───────────────
+# base_config     : Shared anchors reused across all dags_config entries.
+# dags_config     : List of DAG definitions.
+# task_group      : One entry per destination stage (almost always "ingest").
+# tasks[].kind    : Pipeline type.  For this template: mongo_to_bigquery
+# ingest-to-gcs   : Extract from MongoDB and land as Parquet in GCS.
+# load-to-gbq-config : Load from GCS into BigQuery (merge/upsert strategy).
+# =============================================================================
+
+base_config:
+  # GCP project and dataset that receives the data
+  gcp_project_id: &default_project_id lnk-dw
+  gcp_dataset_id: &default_dataset_id raw_<app_name>_mongo   # e.g. raw_one_employee_mongo
+
+  # GCS location (must match the BigQuery dataset region)
+  location: asia-southeast2
+
+  # Airflow connection IDs
+  mongo_conn_id: &mongo_default prod__mongo__<db_name>__rw    # e.g. prod__mongo__kangaroo_db__rw
+  gcp_conn_id:   &gcp_default   prod__gcp__lnk_dw__rw
+
+# =============================================================================
+# DAG definitions
+# =============================================================================
+dags_config:
+
+  # ---------------------------------------------------------------------------
+  # DAG 1 — Daily incremental (most common)
+  # ---------------------------------------------------------------------------
+  - &default_dag_config
+    dag_id: <domain>__<function>__daily_midnight    # follow naming convention: domain__function__cadence
+    domain:   <domain>                              # e.g. people, sales, finance
+    function: <function>                            # e.g. kpi, customer, order
+    cadence:  daily_midnight
+
+    start_date:
+      $datetime: '2026-01-01T00:00:00'             # ISO-8601; adjust to actual go-live date
+      $tz: 'Asia/Jakarta'
+
+    schedule: '@daily'                              # or cron e.g. '0 0 * * *'
+    max_active_runs: 1
+    catchup: false                                  # set true only if backfill is needed
+
+    default_args:
+      queue: onprem                                 # remove this line for cloud workers
+
+    tags:
+      - domain:<domain>
+      - function:<function>
+      - cadence:daily_midnight
+      - source:mongo
+      - destination:bigquery
+
+    dagrun_timeout: 540                             # seconds; increase for large collections
+
+    task_group:
+      - id: dest_bigquery
+        stage: ingest
+        tasks:
+          - id: source_<app_name>                  # e.g. source_app_oneltl_hris
+            source_connection_id: *mongo_default
+            dest_connection_id:   *gcp_default
+            kind: mongo_to_bigquery
+
+            tasks:
+              # ---------------------------------------------------------------
+              # Collection 1
+              # ---------------------------------------------------------------
+              - id: <collection_name>              # e.g. users, orders, transactions
+                ingest-to-gcs:
+                  collection: <collection_name>    # exact MongoDB collection name
+
+                  # Incremental filter — uses Airflow data_interval macros
+                  # Remove the filter block for a full-load collection
+                  filter:
+                    updated_at:
+                      $gte: '{{ data_interval_start }}'
+                      $lt:  '{{ data_interval_end   }}'
+
+                  # List every field you need; set value to 1 to include, 0 to exclude
+                  # Remove the projection block to return all fields
+                  projection:
+                    _id:        1
+                    field_one:  1
+                    field_two:  1
+                    created_at: 1
+                    created_by: 1
+                    updated_at: 1
+                    updated_by: 1
+                    is_active:  1
+                    __v:        1
+
+                  # GCS landing path — must be unique per collection/date/ts
+                  gcs_dest_path: >
+                    collection=<collection_name>/date={{ ds }}/ts={{ ts_nodash }}.parquet
+
+                  mongo_conn_id:  *mongo_default
+                  dest_data_type: parquet           # parquet (recommended) or json
+
+                load-to-gbq-config:
+                  # Use the merge-insert strategy for incremental loads.
+                  # Use load_data_from_gcs_to_gbq.sql for full / append loads.
+                  sql: 'load_data_from_gcs_to_gbq_merge_insert_strategy.sql'
+                  params:
+                    project_id:  *default_project_id
+                    dataset_id:  *default_dataset_id
+                    table_id:    <collection_name>   # BigQuery target table name
+
+                    # Cast each MongoDB field to its BigQuery type.
+                    # Use SAFE_CAST for timestamps coming from MongoDB BSON dates.
+                    columns_definition: >
+                      CAST(`_id` AS STRING) AS `_id`,
+                      CAST(`field_one` AS STRING) AS `field_one`,
+                      CAST(`field_two` AS INT64) AS `field_two`,
+                      SAFE_CAST(SAFE_CAST(`created_at` AS STRING) AS TIMESTAMP) AS `created_at`,
+                      CAST(`created_by` AS STRING) AS `created_by`,
+                      SAFE_CAST(SAFE_CAST(`updated_at` AS STRING) AS TIMESTAMP) AS `updated_at`,
+                      CAST(`updated_by` AS STRING) AS `updated_by`,
+                      CAST(`is_active` AS BOOL) AS `is_active`,
+                      CAST(`__v` AS INT64) AS `__v`,
+                      TIMESTAMP('{{ data_interval_start }}') AS `__scheduled_at__`,
+                      CURRENT_TIMESTAMP() AS `__extracted_at__`
+
+                    external_table_format: parquet
+
+                    # For incremental DAGs, leave time_ranged_filter as "" so the
+                    # merge strategy relies on unique_identifier alone.
+                    time_ranged_filter: ""
+
+                    # Primary key used to detect existing rows for merge/upsert
+                    unique_identifier: _id
+
+                    external_table_path: >
+                      collection=<collection_name>/date={{ ds }}/ts={{ ts_nodash }}.parquet
+
+                    # Partition the target table — pick a timestamp/date field
+                    partition_by_field: >
+                      DATE_TRUNC(`created_at`, DAY)
+
+                    # Optional: up to 4 clustering fields (comma-separated string)
+                    cluster_by_fields: ''
+
+              # ---------------------------------------------------------------
+              # Collection 2 — add as many collections as needed
+              # ---------------------------------------------------------------
+              - id: <another_collection>
+                ingest-to-gcs:
+                  collection: <another_collection>
+                  filter:
+                    updated_at:
+                      $gte: '{{ data_interval_start }}'
+                      $lt:  '{{ data_interval_end   }}'
+                  projection:
+                    _id:       1
+                    field_a:   1
+                    field_b:   1
+                    created_at: 1
+                    updated_at: 1
+                  gcs_dest_path: >
+                    collection=<another_collection>/date={{ ds }}/ts={{ ts_nodash }}.parquet
+                  mongo_conn_id:  *mongo_default
+                  dest_data_type: parquet
+
+                load-to-gbq-config:
+                  sql: 'load_data_from_gcs_to_gbq_merge_insert_strategy.sql'
+                  params:
+                    project_id:  *default_project_id
+                    dataset_id:  *default_dataset_id
+                    table_id:    <another_collection>
+                    columns_definition: >
+                      CAST(`_id` AS STRING) AS `_id`,
+                      CAST(`field_a` AS STRING) AS `field_a`,
+                      CAST(`field_b` AS INT64) AS `field_b`,
+                      SAFE_CAST(SAFE_CAST(`created_at` AS STRING) AS TIMESTAMP) AS `created_at`,
+                      SAFE_CAST(SAFE_CAST(`updated_at` AS STRING) AS TIMESTAMP) AS `updated_at`,
+                      TIMESTAMP('{{ data_interval_start }}') AS `__scheduled_at__`,
+                      CURRENT_TIMESTAMP() AS `__extracted_at__`
+                    external_table_format: parquet
+                    time_ranged_filter: ""
+                    unique_identifier: _id
+                    external_table_path: >
+                      collection=<another_collection>/date={{ ds }}/ts={{ ts_nodash }}.parquet
+                    partition_by_field: >
+                      DATE_TRUNC(`created_at`, DAY)
+                    cluster_by_fields: ''
+
+  # ---------------------------------------------------------------------------
+  # DAG 2 — Full load / ad-hoc (e.g. backfill or one-time historical load)
+  #          Uses YAML anchor merge (<<: *default_dag_config) to inherit
+  #          all fields from DAG 1 and override only what changes.
+  # ---------------------------------------------------------------------------
+  - <<: *default_dag_config
+    dag_id: <domain>__<function>__full_load_onetime
+    cadence: full_load_onetime
+    schedule: null                                  # triggered manually
+    catchup: false
+
+    task_group:
+      - id: dest_bigquery
+        stage: ingest
+        tasks:
+          - id: source_<app_name>
+            source_connection_id: *mongo_default
+            dest_connection_id:   *gcp_default
+            kind: mongo_to_bigquery
+
+            tasks:
+              - id: <collection_name>
+                ingest-to-gcs:
+                  collection: <collection_name>
+                  # No filter → full collection load
+                  projection:
+                    _id:        1
+                    field_one:  1
+                    field_two:  1
+                    created_at: 1
+                    updated_at: 1
+                  gcs_dest_path: >
+                    collection=<collection_name>/date={{ ds }}/ts={{ ts_nodash }}.parquet
+                  mongo_conn_id:  *mongo_default
+                  dest_data_type: parquet
+
+                load-to-gbq-config:
+                  # Full load uses the simple append/overwrite SQL, not the merge strategy
+                  sql: 'load_data_from_gcs_to_gbq.sql'
+                  params:
+                    project_id:  *default_project_id
+                    dataset_id:  *default_dataset_id
+                    table_id:    <collection_name>
+                    columns_definition: >
+                      CAST(`_id` AS STRING) AS `_id`,
+                      CAST(`field_one` AS STRING) AS `field_one`,
+                      CAST(`field_two` AS INT64) AS `field_two`,
+                      SAFE_CAST(SAFE_CAST(`created_at` AS STRING) AS TIMESTAMP) AS `created_at`,
+                      SAFE_CAST(SAFE_CAST(`updated_at` AS STRING) AS TIMESTAMP) AS `updated_at`,
+                      TIMESTAMP('{{ data_interval_start }}') AS `__scheduled_at__`,
+                      CURRENT_TIMESTAMP() AS `__extracted_at__`
+                    external_table_format: parquet
+                    time_ranged_filter: ""
+                    unique_identifier: _id
+                    external_table_path: >
+                      collection=<collection_name>/date={{ ds }}/ts={{ ts_nodash }}.parquet
+                    partition_by_field: >
+                      DATE_TRUNC(`created_at`, DAY)
+                    cluster_by_fields: ''
