@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 # Symlink shared env dirs/files from the main git worktree into a new worktree.
-# Used by Zed's `create_worktree` task hook. Runs as a script (no -c), so
-# quoting is safe regardless of which shell Zed spawns.
+# Intended to run from Zed's `create_worktree` task hook. If Zed does not
+# provide ZED_WORKTREE_ROOT / ZED_MAIN_GIT_WORKTREE (e.g. worktree created via
+# the shell), exit quietly — the shell `gwt` function handles that case.
 set -euo pipefail
 
-main_root="${ZED_MAIN_GIT_WORKTREE:?ZED_MAIN_GIT_WORKTREE not set}"
-wt_root="${ZED_WORKTREE_ROOT:?ZED_WORKTREE_ROOT not set}"
+wt_root="${ZED_WORKTREE_ROOT:-}"
+main_root="${ZED_MAIN_GIT_WORKTREE:-}"
+
+if [ -z "$wt_root" ] || [ -z "$main_root" ]; then
+    echo "skipped: missing ZED_WORKTREE_ROOT or ZED_MAIN_GIT_WORKTREE (use shell gwt instead)"
+    exit 0
+fi
+if [ ! -d "$wt_root" ]; then
+    echo "error: worktree root $wt_root does not exist" >&2
+    exit 1
+fi
 
 for name in .venv .env; do
     if [ -e "$main_root/$name" ]; then
