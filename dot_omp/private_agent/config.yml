@@ -1,0 +1,72 @@
+modelRoles: 
+  smol: 9router/cx/gpt-5.4-mini
+  default: 9router/cx/gpt-5.6-terra
+  slow: 9router/cx/gpt-5.6-sol-review:high
+cycleOrder: 
+  - smol
+  - default
+  - slow
+enabledModels: 
+  []
+tools: 
+  approvalMode: write
+  approval: 
+    edit: prompt
+    bash: allow
+    tts: deny
+ask: 
+  enabled: true
+astEdit: 
+  enabled: true
+debug: 
+  enabled: true
+lsp: 
+  enabled: true
+todo: 
+  enabled: true
+browser: 
+  enabled: false
+computer: 
+  enabled: true
+eval: 
+  py: false
+  js: false
+glob: 
+  enabled: false
+grep: 
+  enabled: false
+astGrep: 
+  enabled: true
+inspect_image: 
+  enabled: true
+github: 
+  enabled: false
+generate_image: 
+  enabled: false
+web_search: 
+  enabled: true
+launch: 
+  enabled: true
+autolearn: 
+  enabled: false
+memories: 
+  enabled: false
+symbolPreset: unicode
+theme: 
+  light: light
+  dark: dark-gruvbox
+setupVersion: 1
+colorBlindMode: false
+statusLine: 
+  preset: default
+defaultThinkingLevel: auto
+steeringMode: one-at-a-time
+memory: 
+  backend: "off"
+compaction: 
+  thresholdPercent: 70
+  keepRecentTokens: 16000
+  midTurnEnabled: true
+  autoContinue: true
+bashInterceptor: 
+  enabled: true
