@@ -9,10 +9,11 @@ cycleOrder:
 enabledModels: 
   []
 tools: 
-  approvalMode: write
+  approvalMode: yolo
   approval: 
-    edit: prompt
     bash: allow
+    edit: allow
+    hub: allow
     tts: deny
 ask: 
   enabled: true
