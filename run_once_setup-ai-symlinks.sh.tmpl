@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# run_once_setup-ai-symlinks.sh.tmpl
+#
+# Creates ~/.agents/skills as a symlink pointing to ~/.claude/skills.
+# This lets OpenCode (and any other agent that reads ~/.agents/skills/*/SKILL.md)
+# discover the same skills managed under dot_claude/skills/ in chezmoi — without
+# duplicating files or maintaining a separate dot_agents/ managed directory.
+#
+# `ln -sfn` makes this idempotent: safe to re-run on every new machine provisioning.
+
+set -euo pipefail
+
+AGENTS_DIR="${HOME}/.agents"
+SKILLS_SYMLINK="${AGENTS_DIR}/skills"
+SKILLS_TARGET="${HOME}/.claude/skills"
+
+# Ensure the parent directory exists
+mkdir -p "${AGENTS_DIR}"
+
+# Create (or replace) the symlink
+# -s  : symbolic link
+# -f  : remove existing destination if it exists
+# -n  : treat destination as a normal file if it is a symlink to a directory
+ln -sfn "${SKILLS_TARGET}" "${SKILLS_SYMLINK}"
+
+echo "AI skills symlink set: ${SKILLS_SYMLINK} -> ${SKILLS_TARGET}"

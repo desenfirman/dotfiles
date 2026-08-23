@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly dir="$HOME/Pictures/BingWallpaper"
+readonly latest_dir="$dir/latest"
+readonly api='https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US'
+mkdir -p "$dir" "$latest_dir"
+previous_hash=""
+if [[ -f "$dir/.latest.json" ]]; then
+    previous_hash="$(jq -r '.hash // empty' "$dir/.latest.json")"
+fi
+json="$(curl --fail --silent --show-error --location "$api")"
+mapfile -t image < <(jq -r '.images[0] | [.startdate, .urlbase, .hsh] | .[]' <<<"$json")
+
+startdate="${image[0]}"
+urlbase="${image[1]}"
+hash="${image[2]}"
+
+if [[ -z "$startdate" || "$startdate" == null || -z "$urlbase" || "$urlbase" == null ]]; then
+    printf 'Bing API returned no image\n' >&2
+    exit 1
+fi
+
+readonly output="$dir/${startdate}-${urlbase#*OHR.}_UHD.jpg"
+readonly latest="$latest_dir/bing-latest.jpg"
+
+if [[ ! -s "$output" ]]; then
+    curl --fail --silent --show-error --location \
+        "https://www.bing.com${urlbase}_UHD.jpg&rf=LaDigue_1920x1080.jpg&pid=hp" \
+        --output "$output"
+fi
+
+rm -f "$latest_dir"/*.jpg
+cp --reflink=auto "$output" "$latest"
+
+jq -n \
+    --arg startdate "$startdate" \
+    --arg hash "$hash" \
+    --arg file "$latest" \
+    '{startdate: $startdate, hash: $hash, file: $file}' \
+    > "$dir/.latest.json"
+if [[ -n "$previous_hash" && "$previous_hash" != "$hash" ]]; then
+    title='Bing wallpaper updated'
+    body="${startdate:0:4}-${startdate:4:2}-${startdate:6:2} wallpaper is ready"
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send --app-name='Bing Wallpaper' --icon="$latest" "$title" "$body"
+    else
+        gdbus call --session \
+            --dest org.freedesktop.Notifications \
+            --object-path /org/freedesktop/Notifications \
+            --method org.freedesktop.Notifications.Notify \
+            'Bing Wallpaper' 0 '' "$title" "$body" '[]' '{}' 5000 >/dev/null
+    fi
+fi
+
+printf '%s\n' "$latest"
+

@@ -2,3 +2,6 @@ commitizen
 flake8
 autopep8
 openpyxl
+kaggle
+cookiecutter
+

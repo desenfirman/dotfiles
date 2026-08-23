@@ -1,3 +1,17 @@
+# Universal Agent Instructions
+
+## Personal memory
+
+Before beginning a task, read `~/.config/ai/personal.md` if it exists. Treat it as private user context and apply it as background preferences. Do not modify it unless explicitly asked, and do not copy its contents into project files, commits, logs, or public output.
+
+## Precedence
+
+1. Explicit user request
+2. Project-local instructions
+3. `~/.config/ai/personal.md`
+4. These universal instructions
+5. Tool defaults
+
 # Claude Global Memory
 
 ## Global Context
@@ -78,3 +92,16 @@ Tersedia di `~/.claude/memory/scripts/memory.py` — Python stdlib only:
 - `recall(wing, room, hall=None)` → list drawer yang relevan
 - `search(keyword, wing=None)` → grep-based scan
 - `wake_up(wing)` → identity + top facts dari wing tertentu
+
+@RTK.md
+
+<!-- CODEGRAPH_START -->
+## CodeGraph
+
+In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
+
+- **MCP tool** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them, including dynamic-dispatch hops grep can't follow. Name a file or symbol in the query to read its current line-numbered source. If it's listed but deferred, load it by name via tool search.
+- **Shell** (always works): `codegraph explore "<symbol names or question>"` prints the same output.
+
+If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
+<!-- CODEGRAPH_END -->

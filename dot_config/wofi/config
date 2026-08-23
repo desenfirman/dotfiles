@@ -1,0 +1,13 @@
+show=drun
+prompt=::
+width=800
+height=600
+location=center
+allow_images=true
+insensitive=true
+matching=fuzzy
+sort_order=default
+term=cosmic-term
+normal_window=true
+hide_scroll=true
+no_actions=true

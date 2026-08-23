@@ -1,22 +1,46 @@
 #!/bin/bash
-echo "Checking miniconda in $HOME/miniconda"
-if [[ !  -d ~/miniconda3 ]]; then
-	echo "Miniconda didnt exists. Installing latest miniconda from repo.anaconda.com"
-	mkdir -p ~/miniconda3
-	wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
-	bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
-	rm -rf ~/miniconda3/miniconda.sh
+
+# ========== Config ==========
+MINICONDA_VERSION="py39_4.9.2"  # <- This is version 3.9.20 equivalent (Python 3.9 + Miniconda 4.9.2)
+USERNAME=$(whoami)
+INSTALL_DIR="/opt/$USERNAME/miniconda3"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-${MINICONDA_VERSION}-Linux-x86_64.sh"
+INSTALLER_PATH="/tmp/miniconda_installer.sh"
+
+# ========== Provision ==========
+echo "Checking Miniconda installation in $INSTALL_DIR"
+
+if [[ ! -d "$INSTALL_DIR" ]]; then
+    echo "Miniconda not found. Installing version $MINICONDA_VERSION..."
+
+    # Create base dir if needed, with proper permissions
+    sudo mkdir -p "$INSTALL_DIR"
+    sudo chown -R "$USERNAME:$USERNAME" "$(dirname "$INSTALL_DIR")"
+
+    # Download and install
+    wget "$INSTALLER_URL" -O "$INSTALLER_PATH"
+    bash "$INSTALLER_PATH" -b -u -p "$INSTALL_DIR"
+    rm -f "$INSTALLER_PATH"
+
+    echo "Miniconda $MINICONDA_VERSION installed to $INSTALL_DIR"
 else
-	echo "Miniconda already exists in local. Checking mininconda python version"
-	~/miniconda3/bin/python --version
+    echo "Miniconda already exists at $INSTALL_DIR"
+    "$INSTALL_DIR/bin/python" --version
 fi
 
-if [[ -f ~/miniconda3/bin/pip ]]; then
-	echo "Installing requirements from file ~/pip_requirements.txt"
-	~/miniconda3/bin/pip install -r pip_requirements.txt
-else
-	echo "Couldn't install some pip requirements from file ~/pip_requirements.txt due missing pip binary file"
-	echo "Please make sure miniconda is properly installed"
+# ========== PATH Management ==========
+if ! grep -q "$INSTALL_DIR/bin" <<< "$PATH"; then
+    echo "Adding Miniconda to PATH in ~/.bashrc"
+    echo "export PATH=\"$INSTALL_DIR/bin:\$PATH\"" >> ~/.bashrc
+    source ~/.bashrc
 fi
 
+# ========== Pip Requirements ==========
+if [[ -f "$INSTALL_DIR/bin/pip" ]]; then
+    echo "Installing requirements from $SCRIPT_DIR/pip_requirements.txt"
+    "$INSTALL_DIR/bin/pip" install -r "$SCRIPT_DIR/pip_requirements.txt"
+else
+    echo "Missing pip binary. Please check Miniconda installation."
+fi
 

@@ -1,0 +1,48 @@
+{
+    (
+        modifiers: [Super],
+        key: "q",
+    ): Disable,
+    (
+        modifiers: [Super, Shift],
+        key: "q",
+    ): Close,
+    (
+        modifiers: [Super],
+        key: "t",
+    ): Disable,
+    (
+        modifiers: [Super],
+        key: "Return",
+    ): System(Terminal),
+    (
+        modifiers: [Super],
+        key: "d",
+        description: Some("rofi applications and commands"),
+    ): Spawn("/home/mis-stf08-dese/.local/bin/rofi -kb-cancel Escape -show combi -modes combi -combi-modes drun,run,window -theme /home/mis-stf08-dese/.config/rofi/launchers/type-1/style-14.rasi"),
+    (
+        modifiers: [Super],
+        key: "y",
+        description: Some("rofi switch window"),
+    ): Spawn("rofi -kb-cancel Escape -show window -modi run,drun,window -theme /home/mis-stf08-dese/.config/rofi/launchers/type-1/style-14.rasi"),
+    (
+        modifiers: [Super, Shift],
+        key: "e",
+        description: Some("rofi powermenu"),
+    ): Spawn("/home/mis-stf08-dese/.config/rofi/powermenu/type-3/powermenu.sh"),
+    (
+        modifiers: [Super],
+        key: "c",
+        description: Some("rofi drun"),
+    ): Spawn("rofi -kb-cancel Escape -show drun -modi run,drun,window -theme /home/mis-stf08-dese/.config/rofi/launchers/type-1/style-14.rasi"),
+    (
+        modifiers: [Super],
+        key: "v",
+        description: Some("clipboard history"),
+    ): Spawn("sh -c 'cliphist list | wofi --dmenu --prompt Clipboard | cliphist decode | wl-copy'"),
+    (
+        modifiers: [Super, Shift],
+        key: "x",
+        description: Some("rofi window selector"),
+    ): Spawn("/home/mis-stf08-dese/.local/bin/rofi -kb-cancel Escape -show window -modi window -theme /home/mis-stf08-dese/.config/rofi/launchers/type-1/style-14.rasi"),
+}
