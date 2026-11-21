@@ -1,0 +1,13 @@
+{
+  "idleCompaction": "onReturn",
+  "providerInstances": {
+    "antigravity": {
+      "driver": "antigravity",
+      "enabled": true
+    },
+    "opencode": {
+      "driver": "opencode",
+      "enabled": true
+    }
+  }
+}
